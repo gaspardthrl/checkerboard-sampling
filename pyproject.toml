@@ -1,0 +1,23 @@
+[project]
+name = "checkerboard-sampling"
+version = "0.1.0"
+authors = [
+    { name = "Lolshh", email = "gasthoral@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "matplotlib",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["data", "frameworks", "models", "training", "utils", "viz"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
