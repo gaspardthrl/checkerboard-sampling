@@ -3,9 +3,15 @@ import matplotlib.pyplot as plt
 
 
 def _tile_occupancy(samples: np.ndarray, n_tiles: int) -> np.ndarray:
+    # drop non-finite points: casting them to an index would silently bin them
+    samples = samples[np.isfinite(samples).all(axis=1)]
+    dim = samples.shape[1]
+    counts = np.zeros((n_tiles,) * dim)
+    if len(samples) == 0:
+        return counts
+
     idx = np.clip((samples * n_tiles).astype(int), 0, n_tiles - 1)
-    counts = np.zeros((n_tiles, n_tiles, n_tiles))
-    np.add.at(counts, (idx[:, 0], idx[:, 1], idx[:, 2]), 1)
+    np.add.at(counts, tuple(idx[:, d] for d in range(dim)), 1)
     return counts / counts.sum()
 
 
@@ -29,22 +35,43 @@ def plot_weight_slices(probs: np.ndarray):
 
 
 def plot_tile_occupancy_comparison(datasets: dict[str, np.ndarray], n_tiles: int):
-    """Grid of per-z-slice heatmaps: rows = dataset, columns = z tile.
+    """Tile-occupancy heatmap(s), empirical, computed by binning raw samples.
 
-    Empirical tile occupancy, computed by binning raw samples — works on
-    ground-truth samples and generated samples alike, with a shared color
-    scale across all panels so magnitudes are comparable.
+    2D data (samples with 2 columns): one panel per dataset.
+    3D data: rows = dataset, columns = z tile, as before.
+
+    Works on ground-truth samples and generated samples alike, with a shared
+    color scale across all panels so magnitudes are comparable.
     """
     labels = list(datasets.keys())
-    occupancies = {label: _tile_occupancy(samples, n_tiles) for label, samples in datasets.items()}
+    occupancies = {label: _tile_occupancy(s, n_tiles) for label, s in datasets.items()}
+    dim = next(iter(occupancies.values())).ndim
     vmax = max(occ.max() for occ in occupancies.values())
+
+    if dim == 2:
+        fig, axes = plt.subplots(
+            1, len(labels), figsize=(3.6 * len(labels), 3.6),
+            constrained_layout=True, squeeze=False,
+        )
+        axes = axes[0]
+        for ax, label in zip(axes, labels):
+            im = ax.imshow(occupancies[label].T, origin="lower", vmin=0, vmax=vmax, cmap="Blues")
+            ax.set_title(label)
+            ax.set_xlabel("x tile (i)")
+            ax.set_ylabel("y tile (j)")
+            ax.set_xticks(range(n_tiles))
+            ax.set_yticks(range(n_tiles))
+        fig.colorbar(im, ax=axes.tolist(), label="empirical tile probability mass", shrink=0.8)
+        return fig
+
+    if dim != 3:
+        raise ValueError(f"expected 2D or 3D samples, got {dim}D")
 
     fig, axes = plt.subplots(
         len(labels), n_tiles,
         figsize=(3.2 * n_tiles + 1, 3.2 * len(labels)),
         constrained_layout=True, squeeze=False,
     )
-
     for row, label in enumerate(labels):
         occ = occupancies[label]
         for k in range(n_tiles):
