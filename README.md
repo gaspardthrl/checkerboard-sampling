@@ -37,7 +37,7 @@ We next fine-tune the pre-trained models for exploration.
 
 This stage is especially sensitive to representation error because the exploration algorithm operates on the probability geometry learned during pre-training. Leakage or poorly estimated scores can therefore be amplified during fine-tuning.
 
-### S-MEME with DDPM
+### [S-MEME](https://arxiv.org/pdf/2506.15385) with DDPM
 
 #### Raw coordinates
 
@@ -47,7 +47,7 @@ This stage is especially sensitive to representation error because the explorati
 
 ![S-MEME from HGFF DDPM](./assets/DDPM_2D_N4_B85_100K_T100_RFF_smeme_scatter.png)
 
-### Global Flow Expander with CFM
+### Global [Flow Expander](https://arxiv.org/pdf/2602.15984) with CFM
 
 #### Raw coordinates
 
